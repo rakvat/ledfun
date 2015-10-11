@@ -3,39 +3,33 @@
 require "thor"
 require "socket"
 
-PORT = 5577
-IP = "192.168.1.113"
-SOCKET = TCPSocket.new(IP, PORT)
-
-def send_command(array)
-  command = array.pack('C*')
-  SOCKET.write(command)
-end
+$LOAD_PATH.unshift File.expand_path("..", __FILE__)
+require "lib/send"
 
 class LightCli < Thor
   desc "set R G B", "set color to R G B (int values from 0 to 255)"
   def set(r, g, b)
-    send_command([0x56, r.to_i, g.to_i, b.to_i, 0xAA])
+    Send.perform([0x56, r.to_i, g.to_i, b.to_i, 0xAA])
   end
 
   desc "pause", "pause"
   def pause
-    send_command([0xCC, 0x20, 0x33])
+    Send.perform([0xCC, 0x20, 0x33])
   end
 
   desc "rrun", "run"
   def rrun
-    send_command([0xCC, 0x21, 0x33])
+    Send.perform([0xCC, 0x21, 0x33])
   end
 
   desc "on", "on"
   def on
-    send_command([0xCC, 0x23, 0x33])
+    Send.perform([0xCC, 0x23, 0x33])
   end
 
   desc "off", "off"
   def off
-    send_command([0xCC, 0x24, 0x33])
+    Send.perform([0xCC, 0x24, 0x33])
   end
 
   desc "preset ID SPEED", "preset with ID (25 seven color cross fade
@@ -59,7 +53,7 @@ class LightCli < Thor
                                            37 white strobe flash
                                            38 seven color jumbing change) SPEED (hex from 00 fast to FF slow)"
   def preset(id, speed)
-    send_command([0xBB, id.to_i(16), speed.to_i(16), 0x44])
+    Send.perform([0xBB, id.to_i(16), speed.to_i(16), 0x44])
   end
 
   desc "rainbow SPEED", "rainbow SPEED (hex from 00 fast to FF slow, defaults to slow)"
@@ -82,7 +76,7 @@ class LightCli < Thor
                0x88, 0x00, 0xff,
                0xff, 0x00, 0xff,
                speed.to_i(16), 0x3a, 0xff, 0x66]
-    send_command(rainbow)
+    Send.perform(rainbow)
   end
 
   desc "reds SPEED", "reds (hex from 00 fast to FF slow, defaults to slow)"
@@ -105,9 +99,8 @@ class LightCli < Thor
             0xe0, 0x00, 0x00,
             0xff, 0x00, 0x00,
             speed.to_i(16), 0x3a, 0xff, 0x66]
-    send_command(reds)
+    Send.perform(reds)
   end
 end
 
-LightCli.start(ARGV)
-SOCKET.close
+LightCli.start(ARGV);
