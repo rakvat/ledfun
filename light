@@ -1,0 +1,113 @@
+#!/usr/bin/env ruby
+
+require "thor"
+require "socket"
+
+PORT = 5577
+IP = "192.168.1.113"
+SOCKET = TCPSocket.new(IP, PORT)
+
+def send_command(array)
+  command = array.pack('C*')
+  SOCKET.write(command)
+end
+
+class LightCli < Thor
+  desc "set R G B", "set color to R G B (int values from 0 to 255)"
+  def set(r, g, b)
+    send_command([0x56, r.to_i, g.to_i, b.to_i, 0xAA])
+  end
+
+  desc "pause", "pause"
+  def pause
+    send_command([0xCC, 0x20, 0x33])
+  end
+
+  desc "rrun", "run"
+  def rrun
+    send_command([0xCC, 0x21, 0x33])
+  end
+
+  desc "on", "on"
+  def on
+    send_command([0xCC, 0x23, 0x33])
+  end
+
+  desc "off", "off"
+  def off
+    send_command([0xCC, 0x24, 0x33])
+  end
+
+  desc "preset ID SPEED", "preset with ID (25 seven color cross fade
+                                           26 red gradual change
+                                           27 green gradual change
+                                           28 blue gradual change
+                                           29 yellow gradual change
+                                           2A cyan gradual change
+                                           2B purple gradual change
+                                           2C white gradual change
+                                           2D red, green cross fade
+                                           2E red, blue cross fade
+                                           2F green, blue cross fade
+                                           30 seven color strobe flash
+                                           31 red strobe flash
+                                           32 green strobe flash
+                                           33 blue strobe flash
+                                           34 yellow strobe flash
+                                           35 cyan strobe flash
+                                           36 purple strobe flash
+                                           37 white strobe flash
+                                           38 seven color jumbing change) SPEED (hex from 00 fast to FF slow)"
+  def preset(id, speed)
+    send_command([0xBB, id.to_i(16), speed.to_i(16), 0x44])
+  end
+
+  desc "rainbow SPEED", "rainbow SPEED (hex from 00 fast to FF slow, defaults to slow)"
+  def rainbow(speed = "FF")
+    rainbow = [0x99,
+               0xff, 0x00, 0xaa,
+               0xff, 0x00, 0x66,
+               0xff, 0x00, 0x33,
+               0xff, 0x00, 0x00,
+               0xff, 0x33, 0x00,
+               0xff, 0x88, 0x00,
+               0xff, 0xff, 0x00,
+               0x88, 0xff, 0x00,
+               0x33, 0xff, 0x00,
+               0x00, 0xff, 0x00,
+               0x00, 0x88, 0x33,
+               0x00, 0x33, 0x88,
+               0x00, 0x00, 0xff,
+               0x33, 0x00, 0xff,
+               0x88, 0x00, 0xff,
+               0xff, 0x00, 0xff,
+               speed.to_i(16), 0x3a, 0xff, 0x66]
+    send_command(rainbow)
+  end
+
+  desc "reds SPEED", "reds (hex from 00 fast to FF slow, defaults to slow)"
+  def reds(speed = 0xFF)
+    reds = [0x99,
+            0xff, 0x00, 0x00,
+            0xe0, 0x00, 0x00,
+            0xc0, 0x00, 0x00,
+            0xa0, 0x00, 0x00,
+            0x80, 0x00, 0x00,
+            0x60, 0x00, 0x00,
+            0x30, 0x00, 0x00,
+            0x00, 0x00, 0x00,
+            0x20, 0x00, 0x00,
+            0x40, 0x00, 0x00,
+            0x60, 0x00, 0x00,
+            0x80, 0x00, 0x00,
+            0xa0, 0x00, 0x00,
+            0xc0, 0x00, 0x00,
+            0xe0, 0x00, 0x00,
+            0xff, 0x00, 0x00,
+            speed.to_i(16), 0x3a, 0xff, 0x66]
+    send_command(reds)
+  end
+end
+
+LightCli.start(ARGV)
+SOCKET.close
